@@ -1,0 +1,295 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Purple/Violet Light Theme Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 262 83% 58%;  /* Purple #7C3AED */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 270 95% 90%; /* Light violet */
+    --secondary-foreground: 262 83% 20%;
+
+    --muted: 270 20% 96%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 270 95% 95%;
+    --accent-foreground: 262 83% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 270 20% 89%;
+    --input: 270 20% 89%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.75rem;
+
+    --glass-bg: 139 92 246 / 0.05;
+    --glass-border: 139 92 246 / 0.1;
+    
+    --success: 142.1 76.2% 36.3%;
+    --warning: 47.9 95.8% 53.1%;
+    --info: 198.6 88.7% 48.4%;
+  }
+
+  .dark {
+    /* Purple/Violet Dark Theme Colors */
+    --background: 262 30% 4%;   /* Very dark purple */
+    --foreground: 270 95% 98%;
+
+    --card: 262 30% 6%;
+    --card-foreground: 270 95% 98%;
+
+    --popover: 262 30% 6%;
+    --popover-foreground: 270 95% 98%;
+
+    --primary: 270 95% 65%;     /* Bright violet #8B5CF6 */
+    --primary-foreground: 262 30% 4%;
+
+    --secondary: 262 30% 12%;
+    --secondary-foreground: 270 95% 98%;
+
+    --muted: 262 30% 12%;
+    --muted-foreground: 270 20% 63%;
+
+    --accent: 262 30% 12%;
+    --accent-foreground: 270 95% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 262 30% 15%;
+    --input: 262 30% 15%;
+    --ring: 270 95% 65%;
+
+    --glass-bg: 139 92 246 / 0.05;
+    --glass-border: 139 92 246 / 0.1;
+    
+    --success: 142.1 70.6% 45.3%;
+    --warning: 47.9 95.8% 53.1%;
+    --info: 198.6 88.7% 48.4%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(var(--glass-bg));
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(var(--glass-border));
+  }
+  
+  .glow-primary {
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.2);
+  }
+  
+  .youtube-shadow {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .youtube-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .youtube-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.5s ease-out;
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success) / 0.8));
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .voice-pulse {
+    animation: voicePulse 1.5s ease-in-out infinite;
+  }
+
+  .youtube-border {
+    border: 1px solid hsl(var(--border));
+  }
+
+  .youtube-focus {
+    transition: border-color 0.2s ease;
+  }
+
+  .youtube-focus:focus-within {
+    border-color: hsl(var(--primary));
+    outline: 2px solid hsl(var(--primary) / 0.2);
+    outline-offset: -1px;
+  }
+
+  /* Custom scrollbar styles */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Loading skeleton animation */
+@keyframes skeleton {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton 1.5s infinite;
+}
