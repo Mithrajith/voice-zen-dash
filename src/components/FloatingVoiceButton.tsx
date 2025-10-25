@@ -3,18 +3,43 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VoiceInput } from '@/components/VoiceInput';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export function FloatingVoiceButton() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Don't show on home page since it has its own voice input
   if (location.pathname === '/') return null;
 
-  const handleVoiceInput = (data: any) => {
-    // Handle voice input globally
-    console.log('Global voice input:', data);
+  const handleVoiceInput = ({ text, category, extractedData }: any) => {
+    console.log('Global voice input:', { text, category, extractedData });
+    
+    if (category === 'todo') {
+      console.log('Navigating to todo with data:', { text, extractedData });
+      navigate('/todo', { state: { newTask: { text, extractedData } } });
+      toast({
+        title: "Todo Added",
+        description: `Added "${text}" to your todo list`,
+      });
+    } else if (category === 'budget') {
+      console.log('Navigating to budget with data:', { text, extractedData });
+      navigate('/budget', { state: { newTransaction: { text, extractedData } } });
+      toast({
+        title: "Budget Entry Added",
+        description: `Added ${extractedData?.type || 'expense'} to your budget`,
+      });
+    } else {
+      toast({
+        title: "Unclear input",
+        description: "I couldn't categorize your input. Please try being more specific.",
+        variant: "destructive"
+      });
+    }
+    
     setIsOpen(false);
   };
 
@@ -63,7 +88,10 @@ export function FloatingVoiceButton() {
               </div>
               
               <VoiceInput 
-                onSubmit={handleVoiceInput}
+                onSubmit={(data) => {
+                  console.log('FloatingVoiceButton received data:', data);
+                  handleVoiceInput(data);
+                }}
                 placeholder="Speak or type your command..."
               />
               

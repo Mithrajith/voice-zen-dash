@@ -10,6 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import CalendarView from "@/components/CalendarView";
+import RecurringTasksManager from "@/components/RecurringTasksManager";
+import { useReminderService } from "@/hooks/useReminderService";
+import { useRecurringTasks } from "@/hooks/useRecurringTasks";
+import { Switch } from "@/components/ui/switch";
 
 type Priority = "low" | "medium" | "high";
 
@@ -27,8 +32,19 @@ export default function Todo() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'recurring'>('list');
   const location = useLocation();
   const { toast } = useToast();
+  const { 
+    startReminders, 
+    stopReminders, 
+    checkReminders: checkTaskReminders, 
+    isActive: remindersActive, 
+    hasPermission, 
+    canRequestPermission 
+  } = useReminderService(tasks);
+  
+  const { generateTasksForRecurring } = useRecurringTasks();
 
   useEffect(() => {
     const saved = localStorage.getItem("tasks");
@@ -41,6 +57,31 @@ export default function Todo() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
     checkReminders();
   }, [tasks]);
+
+  // Listen for recurring task generation
+  useEffect(() => {
+    const handleRecurringTasksGenerated = (event: any) => {
+      const { newTasks } = event.detail;
+      setTasks(prev => [...prev, ...newTasks]);
+      if (newTasks.length > 0) {
+        toast({ 
+          title: `${newTasks.length} recurring task${newTasks.length > 1 ? 's' : ''} generated`,
+          description: "New tasks have been added from your recurring schedules"
+        });
+      }
+    };
+
+    window.addEventListener('recurringTasksGenerated', handleRecurringTasksGenerated);
+    return () => window.removeEventListener('recurringTasksGenerated', handleRecurringTasksGenerated);
+  }, [toast]);
+
+  // Generate recurring tasks on component mount
+  useEffect(() => {
+    const newTasks = generateTasksForRecurring(tasks);
+    if (newTasks.length > 0) {
+      setTasks(prev => [...prev, ...newTasks]);
+    }
+  }, []);
 
   const checkReminders = () => {
     const now = new Date();
@@ -69,9 +110,14 @@ export default function Todo() {
 
   // Handle voice input from navigation state
   useEffect(() => {
+    console.log('Todo page location changed:', location);
+    console.log('Location state:', (location as any)?.state);
+    
     const locationWithState = location as any;
     if (locationWithState?.state?.newTask) {
       const { text, extractedData } = locationWithState.state.newTask;
+      console.log('Processing voice input in Todo page:', { text, extractedData });
+      
       const task: Task = {
         id: Date.now().toString(),
         title: extractedData?.title || text,
@@ -82,31 +128,14 @@ export default function Todo() {
         createdAt: new Date().toISOString(),
       };
       
-      setTasks(prev => [task, ...prev]);
+      console.log('Creating task:', task);
+      setTasks(prev => {
+        const newTasks = [task, ...prev];
+        console.log('Updated tasks:', newTasks);
+        return newTasks;
+      });
+      
       toast({ title: "✅ Task added from voice input!" });
-      
-      // Clear the navigation state
-      window.history.replaceState({}, document.title);
-    }
-  }, [location, toast]);
-
-  // Handle voice input from navigation state
-  useEffect(() => {
-    const locationWithState = location as any;
-    if (locationWithState?.state?.newTask) {
-      const { text, extractedData } = locationWithState.state.newTask;
-      const task: Task = {
-        id: Date.now().toString(),
-        title: extractedData?.title || text,
-        description: extractedData?.description || '',
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // Default to tomorrow
-        priority: extractedData?.priority || 'medium',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      };
-      
-      setTasks(prev => [task, ...prev]);
-      toast({ title: "Task added from voice input!" });
       
       // Clear the navigation state
       window.history.replaceState({}, document.title);
@@ -157,12 +186,95 @@ export default function Todo() {
     }
   };
 
+  const addTask = (taskData: Omit<Task, 'id' | 'createdAt'>) => {
+    const newTask: Task = {
+      ...taskData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+    };
+    setTasks(prev => [newTask, ...prev]);
+  };
+
   return (
         <div className="space-y-6 animate-fade-in max-w-7xl mx-auto px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Tasks</h1>
           <p className="text-muted-foreground text-sm mt-1">Organize your life, one task at a time</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-muted rounded-lg p-1">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="rounded-md"
+            >
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="rounded-md"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendar
+            </Button>
+            <Button
+              variant={viewMode === 'recurring' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('recurring')}
+              className="rounded-md"
+            >
+              Recurring
+            </Button>
+          </div>
+          
+          {/* Reminder Controls */}
+          <div className="flex items-center gap-3 bg-muted/50 rounded-lg p-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Reminders</span>
+              <Switch
+                checked={remindersActive()}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    if (hasPermission) {
+                      startReminders();
+                      toast({ title: "Reminders enabled", description: "You'll get notifications every 3 hours" });
+                    } else if (canRequestPermission) {
+                      Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                          startReminders();
+                          toast({ title: "Reminders enabled", description: "You'll get notifications every 3 hours" });
+                        } else {
+                          toast({ title: "Permission denied", description: "Please enable notifications in your browser settings" });
+                        }
+                      });
+                    } else {
+                      toast({ title: "Notifications not supported", description: "Your browser doesn't support notifications" });
+                    }
+                  } else {
+                    stopReminders();
+                    toast({ title: "Reminders disabled" });
+                  }
+                }}
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                checkTaskReminders();
+                toast({ title: "Checking reminders...", description: "Manual reminder check complete" });
+              }}
+              disabled={!hasPermission}
+              className="text-xs"
+            >
+              Check Now
+            </Button>
+          </div>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -227,6 +339,17 @@ export default function Todo() {
         </Dialog>
       </div>
 
+      {viewMode === 'calendar' ? (
+        <CalendarView
+          tasks={tasks}
+          onAddTask={addTask}
+          onToggleTask={toggleComplete}
+          onDeleteTask={deleteTask}
+        />
+      ) : viewMode === 'recurring' ? (
+        <RecurringTasksManager />
+      ) : (
+        <>
       {/* Google Keep style masonry grid */}
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
         <AnimatePresence>
@@ -326,6 +449,8 @@ export default function Todo() {
           </motion.div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

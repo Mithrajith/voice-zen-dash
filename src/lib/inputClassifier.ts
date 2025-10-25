@@ -9,6 +9,7 @@ interface ClassificationResult {
     type?: 'income' | 'expense';
     priority?: 'low' | 'medium' | 'high';
     description?: string;
+    budgetCategory?: string;
   };
 }
 
@@ -43,6 +44,21 @@ class InputClassifier {
     'spend', 'spent', 'buy', 'bought', 'cost', 'pay', 'paid', 'bill',
     'expense', 'purchase', 'fee', 'charge', 'subscription', 'rent'
   ];
+
+  private budgetCategories = {
+    food: ['food', 'eat', 'meal', 'lunch', 'dinner', 'breakfast', 'restaurant', 'cafe', 'pizza', 'burger', 'sandwich', 'cooking', 'kitchen'],
+    groceries: ['groceries', 'grocery', 'supermarket', 'vegetables', 'fruits', 'milk', 'bread', 'shopping', 'mart', 'store'],
+    snack: ['snack', 'snacks', 'chips', 'chocolate', 'candy', 'cookies', 'ice cream', 'soda', 'juice', 'coffee', 'tea'],
+    rent: ['rent', 'housing', 'apartment', 'house', 'mortgage', 'lease', 'accommodation', 'property'],
+    fees: ['fees', 'fee', 'tuition', 'school', 'college', 'university', 'course', 'class', 'education', 'registration'],
+    stationary: ['stationary', 'stationery', 'pen', 'pencil', 'paper', 'notebook', 'books', 'supplies', 'office'],
+    transport: ['transport', 'transportation', 'gas', 'fuel', 'petrol', 'uber', 'taxi', 'bus', 'train', 'metro', 'parking'],
+    utilities: ['utilities', 'electricity', 'water', 'internet', 'phone', 'mobile', 'wifi', 'heating', 'gas bill'],
+    entertainment: ['entertainment', 'movie', 'cinema', 'games', 'gaming', 'music', 'spotify', 'netflix', 'streaming'],
+    health: ['health', 'medical', 'doctor', 'medicine', 'pharmacy', 'hospital', 'dental', 'fitness', 'gym'],
+    shopping: ['shopping', 'clothes', 'clothing', 'shoes', 'accessories', 'electronics', 'gadgets', 'amazon'],
+    other: ['other', 'miscellaneous', 'misc', 'various']
+  };
 
   classify(input: string): ClassificationResult {
     const lowerInput = input.toLowerCase();
@@ -125,6 +141,9 @@ class InputClassifier {
         extractedData.type = 'expense'; // Default to expense
       }
 
+      // Extract budget category
+      extractedData.budgetCategory = this.extractBudgetCategory(lowerInput);
+
       // Extract reason (clean up the input)
       let reason = input.replace(/\$?\d+(?:\.\d{2})?/, '').trim();
       reason = reason.replace(/^(spend|spent|buy|bought|pay|paid|earn|earned)\s*/i, '').trim();
@@ -157,6 +176,21 @@ class InputClassifier {
     }
 
     return extractedData;
+  }
+
+  private extractBudgetCategory(input: string): string {
+    const words = input.split(/\s+/);
+    
+    // Check each category for keyword matches
+    for (const [category, keywords] of Object.entries(this.budgetCategories)) {
+      for (const keyword of keywords) {
+        if (words.some(word => word.includes(keyword) || keyword.includes(word))) {
+          return category;
+        }
+      }
+    }
+    
+    return 'other'; // Default category
   }
 }
 

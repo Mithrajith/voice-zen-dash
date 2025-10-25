@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Moon, Trash2, Download, Mic, Volume2, Palette, Shield, Database, Upload } from "lucide-react";
+import { Bell, Moon, Trash2, Download, Mic, Volume2, Palette, Shield, Database, Upload, Smartphone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PWAManager } from "@/components/PWAManager";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -305,11 +306,26 @@ export default function Settings() {
         </motion.div>
       </div>
 
-      {/* Data Management */}
+      {/* PWA Management */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
+      >
+        <Card className="glass p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Smartphone className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">App Management</h2>
+          </div>
+          <PWAManager />
+        </Card>
+      </motion.div>
+
+      {/* Data Management */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
       >
         <Card className="glass p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -347,7 +363,7 @@ export default function Settings() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Export your data as a JSON file or import from a previous backup. All data is stored locally.
+            Export your data as a backup or import from a previous backup. Data is now synced to the cloud.
           </p>
         </Card>
       </motion.div>

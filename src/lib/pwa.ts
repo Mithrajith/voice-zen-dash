@@ -83,11 +83,5 @@ export const showInstallPrompt = () => {
   });
 };
 
-export const initializePWA = async () => {
-  await registerServiceWorker();
-  await requestNotificationPermission();
-  showInstallPrompt();
-  
-  // Check for updates every 30 minutes
-  setInterval(checkForUpdates, 30 * 60 * 1000);
-};
+// Re-export from the main PWA service
+export { initializePWA } from '../services/pwa';

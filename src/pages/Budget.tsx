@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
+import BudgetHistory from "@/components/BudgetHistory";
 
 interface Transaction {
   id: string;
@@ -19,6 +20,7 @@ interface Transaction {
   amount: number;
   type: "income" | "expense";
   reason: string;
+  category?: string;
 }
 
 type TimeFilter = "day" | "week" | "month";
@@ -53,6 +55,7 @@ export default function Budget() {
         amount: extractedData?.amount || 0,
         type: extractedData?.type || 'expense',
         reason: extractedData?.description || text,
+        category: extractedData?.budgetCategory || 'other',
       };
       
       setTransactions(prev => [transaction, ...prev]);
@@ -73,6 +76,7 @@ export default function Budget() {
       amount: parseFloat(formData.get("amount") as string),
       type: formData.get("type") as "income" | "expense",
       reason: formData.get("reason") as string,
+      category: formData.get("category") as string || 'other',
     };
 
     setTransactions([transaction, ...transactions]);
@@ -169,6 +173,28 @@ export default function Budget() {
                   required
                   className="bg-muted/50"
                 />
+              </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select name="category" defaultValue="other" required>
+                  <SelectTrigger className="bg-muted/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="food">Food</SelectItem>
+                    <SelectItem value="groceries">Groceries</SelectItem>
+                    <SelectItem value="snack">Snacks</SelectItem>
+                    <SelectItem value="rent">Rent</SelectItem>
+                    <SelectItem value="fees">Fees</SelectItem>
+                    <SelectItem value="stationary">Stationary</SelectItem>
+                    <SelectItem value="transport">Transport</SelectItem>
+                    <SelectItem value="utilities">Utilities</SelectItem>
+                    <SelectItem value="entertainment">Entertainment</SelectItem>
+                    <SelectItem value="health">Health</SelectItem>
+                    <SelectItem value="shopping">Shopping</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="date">Date</Label>
@@ -277,6 +303,11 @@ export default function Budget() {
             />
           </LineChart>
         </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">Budget History & Analytics</h2>
+        <BudgetHistory transactions={transactions} />
       </Card>
     </div>
   );

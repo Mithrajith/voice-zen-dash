@@ -106,16 +106,29 @@ export function VoiceInput({ onSubmit, placeholder = "Speak or type your request
     e?.preventDefault();
     const inputText = (textInput || transcript).trim();
     
-    if (!inputText) return;
+    console.log('VoiceInput handleSubmit called:', { textInput, transcript, inputText });
+    
+    if (!inputText) {
+      console.log('No input text, returning early');
+      return;
+    }
 
     const result = inputClassifier.classify(inputText);
+    console.log('Classification result:', result);
     
     if (onSubmit) {
+      console.log('Calling onSubmit with data:', {
+        text: inputText,
+        category: result.category,
+        extractedData: result.extractedData
+      });
       onSubmit({
         text: inputText,
         category: result.category,
         extractedData: result.extractedData
       });
+    } else {
+      console.log('No onSubmit handler provided');
     }
 
     // Provide voice feedback

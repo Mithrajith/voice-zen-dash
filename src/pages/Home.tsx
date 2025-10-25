@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckSquare, DollarSign, TrendingUp, Sparkles, Mic, Plus } from "lucide-react";
+import { CheckSquare, DollarSign, TrendingUp, Sparkles, Mic, Plus, Clock, Target, AlertCircle, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { VoiceInput } from "@/components/VoiceInput";
 import { useToast } from "@/hooks/use-toast";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 export default function Home() {
   const [tasks, setTasks] = useState([]);
@@ -22,45 +25,85 @@ export default function Home() {
   }, []);
 
   const getStats = () => {
-    const today = new Date().toDateString();
-    const todayTasks = tasks.filter((task: any) => 
-      new Date(task.createdAt).toDateString() === today
-    );
-    const completedTasks = todayTasks.filter((task: any) => task.completed);
+    const today = new Date();
+    const todayStr = today.toDateString();
+    const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    const totalExpenses = transactions
+    // Task analytics
+    const todayTasks = tasks.filter((task: any) => 
+      new Date(task.dueDate).toDateString() === todayStr
+    );
+    const completedToday = todayTasks.filter((task: any) => task.completed);
+    const overdueTasks = tasks.filter((task: any) => 
+      !task.completed && new Date(task.dueDate) < today
+    );
+    const thisWeekTasks = tasks.filter((task: any) => 
+      new Date(task.createdAt) >= thisWeek
+    );
+    const completedThisWeek = thisWeekTasks.filter((task: any) => task.completed);
+    
+    // Budget analytics
+    const thisMonthTransactions = transactions.filter((t: any) => 
+      new Date(t.date) >= thisMonth
+    );
+    const totalExpenses = thisMonthTransactions
       .filter((t: any) => t.type === 'expense')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
-    
-    const totalIncome = transactions
+    const totalIncome = thisMonthTransactions
       .filter((t: any) => t.type === 'income')
       .reduce((sum: number, t: any) => sum + t.amount, 0);
     
-    const savings = totalIncome - totalExpenses;
+    // Category breakdown
+    const categorySpending = thisMonthTransactions
+      .filter((t: any) => t.type === 'expense')
+      .reduce((acc: any, t: any) => {
+        const category = t.category || 'other';
+        acc[category] = (acc[category] || 0) + t.amount;
+        return acc;
+      }, {});
 
-    return [
-      { 
-        label: "Tasks Today", 
-        value: `${completedTasks.length}/${todayTasks.length}`, 
-        icon: CheckSquare, 
-        color: "text-blue-500",
-        progress: todayTasks.length > 0 ? (completedTasks.length / todayTasks.length) * 100 : 0
+    const topCategory = Object.entries(categorySpending)
+      .sort(([,a]: any, [,b]: any) => b - a)[0];
+
+    return {
+      tasks: {
+        todayCompleted: completedToday.length,
+        todayTotal: todayTasks.length,
+        overdue: overdueTasks.length,
+        weeklyCompletion: thisWeekTasks.length > 0 ? (completedThisWeek.length / thisWeekTasks.length) * 100 : 0,
+        weeklyTotal: thisWeekTasks.length
       },
-      { 
-        label: "Total Expenses", 
-        value: `$${totalExpenses.toFixed(2)}`, 
-        icon: DollarSign, 
-        color: "text-red-500",
-        progress: null
-      },
-      { 
-        label: "Net Savings", 
-        value: `$${savings.toFixed(2)}`, 
-        icon: TrendingUp, 
-        color: savings >= 0 ? "text-green-500" : "text-red-500",
-        progress: null
-      },
-    ];
+      budget: {
+        income: totalIncome,
+        expenses: totalExpenses,
+        savings: totalIncome - totalExpenses,
+        topCategory: topCategory ? { name: topCategory[0], amount: topCategory[1] } : null,
+        categoryBreakdown: Object.entries(categorySpending).map(([name, amount]: any) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          value: amount,
+          color: getCategoryColor(name)
+        }))
+      }
+    };
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors: any = {
+      food: '#FF6B6B',
+      groceries: '#4ECDC4',
+      snack: '#45B7D1',
+      rent: '#96CEB4',
+      fees: '#FFEAA7',
+      stationary: '#DDA0DD',
+      transport: '#98D8C8',
+      utilities: '#F7DC6F',
+      entertainment: '#BB8FCE',
+      health: '#85C1E9',
+      shopping: '#F8C471',
+      other: '#AEB6BF'
+    };
+    return colors[category] || '#AEB6BF';
   };
 
   const stats = getStats();
@@ -91,40 +134,75 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
-            <Card className="p-6 hover:shadow-lg transition-all duration-300 border-border/50">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  {stat.progress !== null && (
-                    <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.progress}%` }}
-                        transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
-                        className="h-full bg-primary rounded-full"
-                      />
-                    </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                <CheckSquare className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Today's Tasks</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold">{stats.tasks.todayCompleted}/{stats.tasks.todayTotal}</span>
+                  {stats.tasks.overdue > 0 && (
+                    <Badge variant="destructive" className="text-xs">
+                      {stats.tasks.overdue} overdue
+                    </Badge>
                   )}
                 </div>
               </div>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+            </div>
+          </Card>
+        </motion.div>
 
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
+                <Target className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Weekly Progress</p>
+                <p className="text-lg font-bold">{stats.tasks.weeklyCompletion.toFixed(0)}%</p>
+                <Progress value={stats.tasks.weeklyCompletion} className="h-1 mt-1" />
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                <DollarSign className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">This Month</p>
+                <p className="text-lg font-bold">${stats.budget.expenses.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">expenses</p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${stats.budget.savings >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'}`}>
+                <TrendingUp className={`h-5 w-5 ${stats.budget.savings >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Net Savings</p>
+                <p className={`text-lg font-bold ${stats.budget.savings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ${stats.budget.savings.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
       {/* Voice Assistant Section */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -186,6 +264,132 @@ export default function Home() {
           </div>
         </Card>
       </motion.div>
+
+
+
+      
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Task Analytics */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.4 }}>
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Task Insights</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Today's Completion Rate</span>
+                <div className="flex items-center gap-2">
+                  <Progress 
+                    value={stats.tasks.todayTotal > 0 ? (stats.tasks.todayCompleted / stats.tasks.todayTotal) * 100 : 0} 
+                    className="w-20 h-2" 
+                  />
+                  <span className="text-sm font-medium">
+                    {stats.tasks.todayTotal > 0 ? Math.round((stats.tasks.todayCompleted / stats.tasks.todayTotal) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Weekly Tasks Created</span>
+                <Badge variant="secondary">{stats.tasks.weeklyTotal}</Badge>
+              </div>
+              
+              {stats.tasks.overdue > 0 && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <span className="text-sm">You have {stats.tasks.overdue} overdue task{stats.tasks.overdue > 1 ? 's' : ''}</span>
+                </div>
+              )}
+              
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => navigate('/todo')}
+              >
+                View All Tasks
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+
+
+        
+
+        {/* Budget Analytics */}
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.5 }}>
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Spending Overview</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {stats.budget.topCategory && (
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Top Spending Category</p>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="font-medium capitalize">{stats.budget.topCategory.name}</span>
+                    <span className="font-bold">${(stats.budget.topCategory.amount as number).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Monthly Income</span>
+                  <span className="font-medium text-green-600">${stats.budget.income.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Monthly Expenses</span>
+                  <span className="font-medium text-red-600">${stats.budget.expenses.toFixed(2)}</span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between font-medium">
+                  <span>Net Balance</span>
+                  <span className={stats.budget.savings >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    ${stats.budget.savings.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              
+              {stats.budget.categoryBreakdown.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Spending by Category</p>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <PieChart>
+                      <Pie
+                        data={stats.budget.categoryBreakdown.slice(0, 5)}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={50}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {stats.budget.categoryBreakdown.slice(0, 5).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => navigate('/budget')}
+              >
+                View Budget Details
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { Menu, X, Home, CheckSquare, DollarSign, BarChart3, Settings, Sun, Moon, Bell, Mic } from "lucide-react";
+import { Menu, X, Home, CheckSquare, DollarSign, BarChart3, Settings, Sun, Moon, Bell, Mic, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
 import { VoiceInput } from "@/components/VoiceInput";
 import { FloatingVoiceButton } from "@/components/FloatingVoiceButton";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,10 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { getCurrentUser, logout } = useAuth();
   const { toast } = useToast();
+  
+  const currentUser = getCurrentUser();
 
   const handleVoiceInput = ({ text, category, extractedData }: any) => {
     if (category === 'todo') {
@@ -89,8 +93,10 @@ export function Layout() {
               <Bell className="h-5 w-5" />
             </Button>
 
-            <div className="h-8 w-8 ml-2 rounded-full bg-gradient-to-br from-primary via-primary/90 to-primary/70 flex items-center justify-center shadow-lg">
-              <span className="text-xs font-medium text-white">AI</span>
+            <div className="h-8 w-8 ml-2 rounded-full bg-gradient-to-br from-primary via-primary/90 to-primary/70 flex items-center justify-center shadow-lg" title={currentUser?.name || 'User'}>
+              <span className="text-xs font-medium text-white">
+                {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
             </div>
           </div>
         </div>
@@ -139,9 +145,18 @@ export function Layout() {
               
               {/* Sidebar Footer */}
               <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/40 bg-background/95">
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-accent/40 mb-3"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+                
                 <div className="text-xs text-muted-foreground text-center">
-                  <p>VoiceZen Dashboard</p>
-                  <p className="mt-1">AI-Powered Assistant</p>
+                  <p>Signed in as {currentUser?.name}</p>
+                  <p className="mt-1">VoiceZen Dashboard</p>
                 </div>
               </div>
             </motion.aside>
