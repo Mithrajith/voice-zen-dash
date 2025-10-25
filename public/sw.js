@@ -146,6 +146,22 @@ self.addEventListener('fetch', (event) => {
 // API request handler with offline queue and advanced conflict resolution
 async function handleAPIRequest(request) {
   const url = new URL(request.url);
+
+  // If this is a cross-origin API request (different origin than the app),
+  // avoid queueing in the service worker. Cross-origin requests often
+  // require CORS and are better handled by the browser context; attempting
+  // to queue them here causes spurious "Failed to fetch" queue entries.
+  if (url.origin !== self.location.origin) {
+    try {
+      return await fetch(request);
+    } catch (err) {
+      console.log('Cross-origin API fetch failed, returning network error response:', err);
+      return new Response(JSON.stringify({ error: 'NetworkError', message: err && err.message ? err.message : 'Failed to fetch' }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
   
   // For non-GET requests, handle offline queueing
   if (request.method !== 'GET') {
