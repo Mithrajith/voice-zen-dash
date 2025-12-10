@@ -200,51 +200,36 @@ The intelligent classification system automatically extracts:
 - **Recurring patterns** (daily, weekly, monthly, every Tuesday)
 - **Transaction types** (income vs expense) from contextual keywords
 
-## 🏗️ Technical Architecture
+## 🏗️ Technology Stack & Rationale
 
-### **Frontend Stack**
-- **⚡ Vite** - Lightning-fast build tool with HMR and optimized bundling
-- **⚛️ React 18** - Modern React with hooks, concurrent features, and Suspense
-- **📘 TypeScript** - Full type safety with strict mode and advanced type inference
-- **🎨 Tailwind CSS** - Utility-first CSS with custom design system and responsive variants
-- **🧩 shadcn/ui** - High-quality, accessible component library with Radix UI primitives
-- **🎭 Framer Motion** - Advanced animations with gesture support and layout animations
-- **🔗 React Router** - Client-side routing with protected routes and navigation state
+We chose a modern, type-safe, and performance-oriented stack to deliver a native-app-like experience on the web.
 
-### **Backend Infrastructure**
-- **🟢 Node.js** - Server runtime with Express.js framework
-- **🗄️ MongoDB** - Document database with aggregation pipelines for analytics
-- **🔐 JWT Authentication** - Secure token-based authentication with refresh tokens
-- **🛡️ Middleware Stack** - Error handling, validation, rate limiting, and CORS
-- **📊 Data Aggregation** - Complex queries for financial analytics and task statistics
+### **Frontend Core**
+- **React 18**: Chosen for its robust ecosystem and concurrent features which enable smooth UI updates during voice processing.
+- **TypeScript**: Essential for maintaining code quality and preventing runtime errors in a complex application with many data structures (tasks, transactions, recurring rules).
+- **Vite**: Selected over Create React App for its lightning-fast HMR (Hot Module Replacement) and superior build performance.
 
-### **Voice & AI Intelligence**
-- **🎤 Web Speech API** - Native browser speech recognition with fallback support
-- **🗣️ Speech Synthesis** - Text-to-speech for audio feedback and accessibility
-- **🤖 Custom NLP Engine** - Smart classification with confidence scoring
-- **🧠 Pattern Recognition** - Advanced regex and keyword matching for context extraction
-- **🔊 Audio Processing** - Real-time transcription with noise handling
+### **UI & UX**
+- **Tailwind CSS**: Enables rapid UI development with a utility-first approach, making it easy to implement the complex gradient themes and responsive layouts.
+- **shadcn/ui & Radix UI**: Provides accessible, unstyled primitives that allow us to build a custom design system (WhatsApp/GPay inspired) without fighting default styles.
+- **Framer Motion**: The industry standard for React animations, used here to create the fluid "listening" pulses and smooth page transitions that define the app's feel.
 
-### **State Management & Storage**
-- **📦 React Context** - Global state management with optimized re-renders
-- **🔄 Custom Hooks** - Reusable logic for voice, authentication, data fetching
-- **💾 Multi-layer Storage** - localStorage for client data, IndexedDB for offline queue
-- **🔄 Data Synchronization** - Intelligent sync with conflict resolution
-- **📱 React Query** - Server state management with caching and background updates
+### **Backend & Data**
+- **Node.js & Express**: Provides a lightweight, scalable backend that shares TypeScript interfaces with the frontend.
+- **MongoDB**: The document model perfectly fits our variable data structures (tasks with different metadata, recurring rules) and allows for powerful aggregation pipelines for the analytics dashboard.
+- **JWT (JSON Web Tokens)**: Stateless authentication that works perfectly with the offline-first architecture, allowing the client to manage session state securely.
 
-### **Progressive Web App Features**
-- **� Service Worker** - Advanced caching strategies with background sync
-- **🔔 Push Notifications** - Native notifications with scheduling and persistence
-- **📲 App Manifest** - Full PWA compliance with install prompts
-- **🌐 Offline Support** - Complete offline functionality with queue management
-- **🔄 Background Sync** - Automatic data synchronization when connection restored
-- **💾 IndexedDB** - Client-side database for offline data persistence
+### **Voice & Intelligence**
+- **Web Speech API**: We use the browser's native API instead of cloud services (like Google Cloud Speech or AWS Transcribe) to ensure **privacy**, **zero latency**, and **offline capability**. Your voice data never leaves your device for processing.
+- **Custom NLP Engine**: A lightweight, client-side classification system using regex and keyword weighting. This allows for instant categorization without needing a heavy backend AI model, keeping the app fast and free to run.
 
-### **Development & Deployment**
-- **🔨 ESLint** - Code quality enforcement with TypeScript-specific rules
-- **🎯 Concurrently** - Parallel development server execution
-- **🚀 Vercel Ready** - Optimized for serverless deployment
-- **📱 PWA Optimization** - Service worker registration and caching strategies
+### **PWA & Offline Capability**
+- **Service Workers**: The backbone of our offline-first strategy, intercepting network requests to serve cached content when offline.
+- **IndexedDB**: Used for storing offline actions (created tasks, transactions) in a persistent queue, which automatically syncs with the server when connectivity is restored.
+
+### **Development Tools**
+- **ESLint**: Enforces code quality and consistency across the team.
+- **Concurrently**: Allows running frontend and backend servers simultaneously for a smooth dev experience.
 
 ## 🎨 Design Philosophy
 
